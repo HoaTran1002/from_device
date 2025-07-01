@@ -20,7 +20,7 @@
 ---
 
 ## 작업 흐름도
-
+![flow chart.png]
 ```mermaid
 flowchart TD
     A[Start main.py] --> B[Call check_update.py]

@@ -12,7 +12,7 @@ import ubinascii # For MQTT Client ID
 import ujson # For MQTT payload serialization
 
 # MQTT Configuration
-MQTT_BROKER = "192.168.101.67"  # Replace with your MQTT broker address
+MQTT_BROKER = "15.164.251.253"  # Replace with your MQTT broker address
 MQTT_PORT = 1883
 MQTT_TOPIC_PREFIX = "floor-inspector/device"
 MQTT_TOPIC_SUFFIX = "data"

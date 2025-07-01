@@ -1,6 +1,6 @@
-import usocket as socket
-import ustruct as struct
-from ubinascii import hexlify
+import socket as socket
+import struct as struct
+from binascii import hexlify
 
 class MQTTException(Exception):
     pass

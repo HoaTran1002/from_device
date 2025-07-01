@@ -1,4 +1,6 @@
-from machine import ADC, Timer, I2C, Pin, WDT
+from machine import ADC, Timer, I2C, Pin
+import gc
+from machine import WDT
 import machine
 import utime
 import time
@@ -84,9 +86,9 @@ CURRENT_VERSION = info["CURRENT_VERSION"]
 CURRENT_MODEL = info["CURRENT_MODEL"]
 
 # ===== MQTT CONFIG =====
-BROKER = "192.168.101.67"
-USERNAME = "mqtt-client"
-PASSWORD = "test"
+BROKER = "15.164.251.253"
+USERNAME = "iot_device_1"
+PASSWORD = "device_password_123"
 
 
 def stop_main():
@@ -264,37 +266,74 @@ def request_check_update(client):
     client.publish(check_topic, check_msg)
 
 # ===== MAIN =====
+
+def validate_config():
+    required_vars = ['IMEI', 'BROKER', 'USERNAME', 'PASSWORD']
+    missing = [var for var in required_vars if var not in globals() or not globals()[var]]
+    if missing:
+        print(f"[FATAL] Missing required config: {missing}")
+        return False
+    return True
+
 def run_check_update():
-    print("[INFO] Connecting to Wi-Fi...")
-    if not connect_wifi():
-        print("[FATAL] Cannot proceed without Wi-Fi.")
+    if not validate_config():
         return
-    print("[INFO] Wi-Fi connected.")
 
-    global client
-    client = create_mqtt_client()
-    request_check_update(client)
-    print("[INFO] check_update.py started.")
-    while True:
-        try:
-            client.check_msg()
-        except Exception as e:
-            print("[WARN] MQTT check_msg failed:", e)
-            time.sleep(1)
-            continue
-
-        if SKIP_UPDATE_FLAG:
-            print("[INFO] Update process complete or skipped. Exiting check_update loop.")
-            break
-
-        time.sleep(0.1)
+    print(f"[INFO] Starting check_update at {time.time()}")
+    print(f"[INFO] IMEI: {IMEI}, Broker: {BROKER}")
 
     try:
-        client.disconnect()
-    except:
-        pass
+        print("[INFO] Connecting to Wi-Fi...")
+        if not connect_wifi():
+            print("[FATAL] Cannot proceed without Wi-Fi.")
+            return
+        print("[INFO] Wi-Fi connected.")
 
-    print("[INFO] Running main.py after update check...")
-    run_script("main.py")
+        global client
+        client = create_mqtt_client()
+        request_check_update(client)
+        print("[INFO] check_update.py started.")
 
-        
+        # === Enhanced loop ===
+        start_time = time.time()
+        max_wait_time = 300  # 5 minutes timeout
+        consecutive_errors = 0
+        max_consecutive_errors = 10
+        wdt = WDT(timeout=8000)
+
+        while time.time() - start_time < max_wait_time:
+            try:
+                wdt.feed()
+                client.check_msg()
+                consecutive_errors = 0
+
+                if int(time.time()) % 30 == 0:
+                    gc.collect()
+                    print(f"[DEBUG] Free memory: {gc.mem_free()} bytes")
+
+                if SKIP_UPDATE_FLAG:
+                    print("[INFO] Update process complete or skipped. Exiting loop.")
+                    break
+
+            except Exception as e:
+                consecutive_errors += 1
+                print(f"[WARN] MQTT check_msg failed ({consecutive_errors}/{max_consecutive_errors}): {e}")
+
+                if consecutive_errors >= max_consecutive_errors:
+                    print("[ERROR] Too many consecutive MQTT errors. Exiting loop.")
+                    break
+
+                time.sleep(min(consecutive_errors * 0.5, 5))  # Exponential backoff
+
+            time.sleep(0.1)
+
+        if time.time() - start_time >= max_wait_time:
+            print("[WARN] Timeout reached. Exiting check_update.")
+
+        try:
+            client.disconnect()
+        except:
+            pass
+
+    except Exception as ex:
+        print("[FATAL] run_check_update crashed:", ex)
