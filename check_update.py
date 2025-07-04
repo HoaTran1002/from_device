@@ -166,12 +166,12 @@ def handle_update_command(topic, msg):
                 }))
             print("[FINISHED] No update available. Exiting script.")
             SKIP_UPDATE_FLAG = True
-            return
+            # return
             # client.disconnect()
             # machine.reset()
             # run_script("main.py")
             # return
-            # sys.exit(0)
+            sys.exit(0)
             # machine.reset()
 
 
@@ -215,9 +215,9 @@ def handle_update_command(topic, msg):
 
         # ✅ Đóng kết nối và thoát nếu hoàn tất update
         # client.disconnect()
+        SKIP_UPDATE_FLAG = True
         restore_main()
         # run_script("main.py")
-        SKIP_UPDATE_FLAG = True
         # machine.reset()
         # sys.exit(0)
         # machine.reset()
@@ -248,7 +248,7 @@ def create_mqtt_client():
     # Sub vào topic nhận script update
     update_topic = f"floor-inspector/device/{IMEI}/firmware/update/command"
     client.set_callback(handle_update_command)
-    print("[INFO] MQTT client created. ===>>")
+    print("[INFO] MQTT client created.")
     client.subscribe(update_topic)
     print(f"[INFO] Subscribed to {update_topic}")
 
