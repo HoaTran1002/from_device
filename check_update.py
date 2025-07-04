@@ -86,7 +86,7 @@ CURRENT_VERSION = info["CURRENT_VERSION"]
 CURRENT_MODEL = info["CURRENT_MODEL"]
 
 # ===== MQTT CONFIG =====
-BROKER = "15.164.251.253"
+BROKER = "192.168.101.70"
 USERNAME = "iot_device_1"
 PASSWORD = "device_password_123"
 

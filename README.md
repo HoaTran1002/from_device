@@ -108,7 +108,7 @@ Các file cần copy:
 - main.py
 
 - Dùng lệnh sau:
-    mpremote cp check_update.py optimized_network_socket.py wifi_utils.py umqttsimple.py main.py :/
+    mpremote cp check_update.py wifi_utils.py umqttsimple.py optimized_network_socket.py main.py :/
 
 ### Bước 3: Khởi động lại thiết bị để chạy chương trình
 - mpremote reset
